@@ -125,11 +125,13 @@ ollama pull qwen3.5:27b             # 24GB+ RAM
 ollama pull qwen3-coder:480b-cloud
 ```
 
-### Step 7: Create MCP Config
+### Step 7: Create Project Folder & Config Files
 
 ```bash
 mkdir figma-to-elementor && cd figma-to-elementor
 ```
+
+**Add `CLAUDE.md`** — this file gives Claude Code persistent rules for every session (pixel-perfect accuracy, no absolute positioning, pure Elementor widgets, responsive generation, CSS/JS deliverables). See [`CLAUDE.md`](./CLAUDE.md) in this repo.
 
 Create a file named `.mcp.json`:
 
@@ -233,29 +235,22 @@ Export images from Figma (PNG @2x / SVG) → upload to WordPress **Media → Add
 
 ### 2. The Build Prompt
 
-Paste into Claude Code:
+Paste into Claude Code with your specific Figma node URL:
 
 ```
-Here is my Figma design: [PASTE FIGMA FRAME URL]
+Build this Figma design in Elementor:
+https://www.figma.com/design/FILEID/FileName?node-id=NODE_ID
 
-1. Use Figma MCP to extract the full design context — layout,
-   colors, typography, spacing, component hierarchy.
-
-2. Using Elementor MCP, create a page called "Homepage" and
-   build the design with:
-   - Flexbox containers (not legacy sections)
-   - Exact colors, fonts, sizes, spacing from the Figma design
-   - Responsive breakpoints: desktop, tablet (1024px), mobile (767px)
-   - If Figma has responsive frames, match them exactly
-   - If only desktop exists, generate sensible responsive layouts
-   - Custom CSS for decorative elements (blurred shapes, gradients)
-   - Hide decorative elements on mobile
-   - Button hover: scale(1.05), card hover: translateY(-5px)
-
-3. Use these image URLs: [LIST YOUR WORDPRESS MEDIA URLS]
-
-4. List anything you couldn't implement automatically.
+Follow all rules in CLAUDE.md. Build section by section.
+Provide the CSS and JS documents when done.
 ```
+
+Claude Code will:
+1. Read `CLAUDE.md` rules automatically
+2. Pull exact specs from Figma via MCP (targeting your node-id)
+3. Build the page in Elementor via MCP using only native widgets
+4. Generate responsive tablet and mobile layouts
+5. Give you a complete CSS file and JS file for production
 
 ### 3. Build Section by Section (Recommended)
 
@@ -289,32 +284,45 @@ The cards need more gap on tablet, increase to 40px
 
 ## Deploy to Production
 
-### Template Export/Import (Recommended)
+### Step 1: Export Template
 
 **On your local site:**
 
 1. Open page in Elementor → arrow next to "Update" → **Save as Template**
 2. **Elementor → Templates → Saved Templates** → find it → **Export** (downloads `.json`)
 
+### Step 2: Import Template
+
 **On the production site:**
 
 1. **Elementor → Templates → Saved Templates** → **Import** → upload the `.json`
 2. Create/edit a page → Edit with Elementor → folder icon → My Templates → **Insert**
-3. Re-upload images to production media library
-4. **Elementor → Tools → Replace URL** → replace `.local` URL with production URL
-5. **Elementor → Tools → Clear Files & Data** → regenerate CSS
-6. Copy any custom JS manually via a code snippet plugin
+3. Re-upload images to production media library and update image URLs
+
+### Step 3: Apply Custom CSS & JS
+
+1. Copy the **Custom CSS document** from the build output
+2. Paste into the production site: **Elementor → Page Settings → Custom CSS** (or use "Simple Custom CSS and JS" plugin)
+3. Copy the **Custom JS document** from the build output
+4. Paste via **Elementor → Custom Code → Add New** (body section) or the CSS/JS plugin
+
+### Step 4: Post-Deploy Cleanup
+
+1. **Elementor → Tools → Replace URL** → replace `.local` URL with production URL
+2. **Elementor → Tools → Clear Files & Data** → regenerate CSS
+3. Test desktop, tablet, and mobile on the live site
 
 ### What Transfers
 
-| Element | Transfers? |
-| --- | --- |
-| Layout & structure | ✅ |
-| Widget settings & styles | ✅ |
-| Custom CSS | ✅ |
-| Images | ❌ Re-upload manually |
-| Custom JavaScript | ❌ Copy manually |
-| Global colors/fonts | ❌ Set up on production |
+| Element | Via Template (.json) | Via CSS/JS Documents |
+| --- | --- | --- |
+| Layout & structure | ✅ | — |
+| Widget settings & content | ✅ | — |
+| Elementor inline styles | ✅ | — |
+| Custom CSS | ✅ (if added to sections locally) | ✅ Copy-paste to production |
+| Custom JavaScript | ❌ | ✅ Copy-paste to production |
+| Images | ❌ Re-upload manually | — |
+| Global colors/fonts | ❌ Set up on production | — |
 
 ### Naming Convention
 
@@ -340,6 +348,23 @@ Example: `Homepage-v2-2026-03-12.json`
 | Ollama model too slow | Use a smaller model or switch to `qwen3-coder:480b-cloud`. |
 | Responsive breaks | Build desktop first, then override tablet, then mobile. Never edit mobile first. |
 | Custom CSS not applying | Elementor Free doesn't support widget-level CSS. Use page-level CSS or "Simple Custom CSS and JS" plugin. |
+
+---
+
+## Repo Structure
+
+```
+figma-to-elementor/
+├── CLAUDE.md              # AI build rules (pixel-perfect, responsive, no absolute pos)
+├── .mcp.json              # MCP server configuration
+├── exports/               # Exported Elementor templates (.json)
+│   └── Homepage-v1-2026-03-12.json
+├── css/                   # Custom CSS documents per page
+│   └── Homepage-custom.css
+├── js/                    # Custom JS documents per page
+│   └── Homepage-interactions.js
+└── README.md              # This documentation
+```
 
 ---
 
